@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <title>Fire Map</title>
+  
+  <!-- <link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" /> -->
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+    .leaflet-container {
+      height: 400px;
+      width: 600px;
+      max-width: 100%;
+      max-height: 100%;
+    }
+  </style>
+</head>
+<body>
+
+<div id="map" style="width: 100%; min-height: 700px; height: 100vh;"></div>
+
+<script src="https://unpkg.com/d3@7.9.0/dist/d3.min.js"></script>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<script type="module">
+  const url = "https://docs.google.com/spreadsheets/d/1ZqoFWgNOiY9-no5FDeZlPj5tUUJpxoy_xaWxE8udeE0/export?format=csv&gid=0";
+
+  const parseMaybeBool = x => (x.toLowerCase() === "true") ? true : ( x.toLowerCase() === "false" ? false : undefined);
+
+  const convertRow = row => ({
+    "Lat": +row.Lat,
+    "Lon": +row.Lon,
+    "Start": new Date(row.Start),
+    "End": new Date(row.End),
+    "Active": parseMaybeBool(row.Active),
+    "Reporter": row.Reporter,
+    "Notes": row.Notes
+  });
+
+  window.data = d3.csv(url, convertRow);
+</script>
+
+<script type="module">
+  const map = L.map('map').setView([40.750, 44.835], 13);
+
+  L.tileLayer("https://tile.thunderforest.com/outdoors/{z}/{x}/{y}.png?apikey=1a97d2ea12bf40cc91130eb0b1221cd5", {
+    attribution: "Maps © <a href='https://www.thunderforest.com'>Thunderforest</a>, Data © <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap contributors</a>"
+  }).addTo(map);
+
+  const formatPopup = row => `${row.Notes}<br><br>Lasted: ${row.Start.toDateString()} – ${row.End.toDateString()}<br>Reported by ${row.Reporter}`;
+
+  const addMarkers = row => L.circleMarker([row.Lat, row.Lon], {
+    "color": row.Active ? "orange" : "grey",
+    "fill": true,
+    "fillOpacity": 0.8
+  }).bindPopup(formatPopup(row)).addTo(map);
+
+  window.data.then(data => data.forEach(addMarkers));
+</script>
+
+
+
+</body>
+</html>
