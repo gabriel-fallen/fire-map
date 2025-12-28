@@ -46,7 +46,7 @@
     "Notes": row.Notes
   });
 
-  window.data = d3.csv(url, convertRow);
+  window.fetchData = () => d3.csv(url, convertRow);
 </script>
 
 <script type="module">
@@ -56,15 +56,32 @@
     attribution: "Maps © <a href='https://www.thunderforest.com'>Thunderforest</a>, Data © <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap contributors</a>"
   }).addTo(map);
 
+  const markers = L.featureGroup();
+
   const formatPopup = row => `${row.Notes}<br><br>Lasted: ${row.Start.toDateString()} – ${row.End.toDateString()}<br>Reported by ${row.Reporter}`;
 
   const addMarkers = row => L.circleMarker([row.Lat, row.Lon], {
     "color": row.Active ? "orange" : "grey",
     "fill": true,
     "fillOpacity": 0.8
-  }).bindPopup(formatPopup(row)).addTo(map);
+  }).bindPopup(formatPopup(row)).addTo(markers);
 
-  window.data.then(data => data.forEach(addMarkers));
+  const resetMarkers = data => {
+    markers.removeFrom(map);
+    markers.clearLayers();
+
+    data.forEach(addMarkers);
+
+    markers.addTo(map);
+  };
+
+  (function loop() {
+    window.fetchData()
+      .then(resetMarkers)
+      .then(() => {
+        setTimeout(loop, 10000); // 10 seconds is real-time for humans, but an eternity for computers
+      });
+  })();
 </script>
 
 
