@@ -58,10 +58,11 @@
 
   const markers = L.featureGroup();
 
-  const formatPopup = row => `${row.Notes}<br><br>Lasted: ${row.Start.toDateString()} – ${row.End.toDateString()}<br>Reported by ${row.Reporter}`;
+  const formatPopup = row => `${row.Notes}<br><br>Lasted: ${row.Start.toDateString()} – ${isNaN(row.End) ? "ongoing" : row.End.toDateString()}<br>Reported by ${row.Reporter}`;
+  const colorFor = row => ( (!row.Active) ? "grey" : ( (row.Type === "fire") ? "#ff9e3d" : "#f9f7f6" ) );
 
   const addMarkers = row => L.circleMarker([row.Lat, row.Lon], {
-    "color": row.Active ? "orange" : "grey",
+    "color": colorFor(row),
     "fill": true,
     "fillOpacity": 0.8
   }).bindPopup(formatPopup(row)).addTo(markers);
