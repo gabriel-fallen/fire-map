@@ -42,6 +42,8 @@
     "Start": new Date(row.Start),
     "End": new Date(row.End),
     "Active": parseMaybeBool(row.Active),
+    "Type": row.Type,
+    "Status": row.Status,
     "Reporter": row.Reporter,
     "Notes": row.Notes
   });
@@ -58,14 +60,22 @@
 
   const markers = L.featureGroup();
 
+  const doneOrMissing = status => !status || (status === "") || (status === "ended");
   const formatPopup = row => `${row.Notes}<br><br>Lasted: ${row.Start.toDateString()} – ${isNaN(row.End) ? "ongoing" : row.End.toDateString()}<br>Reported by ${row.Reporter}`;
-  const colorFor = row => ( (!row.Active) ? "grey" : ( (row.Type === "fire") ? "#ff9e3d" : "#f9f7f6" ) );
+  
+  const fireColor = "#ff9e3d";
+  const smokeColor = "#f9f7f6";
+  const colorFor = row => ( (row.Status === "stale") ? "grey" : ( (row.Type === "fire") ? fireColor : smokeColor ) );
 
-  const addMarkers = row => L.circleMarker([row.Lat, row.Lon], {
-    "color": colorFor(row),
-    "fill": true,
-    "fillOpacity": 0.8
-  }).bindPopup(formatPopup(row)).addTo(markers);
+  const addMarkers = row => {
+    if (doneOrMissing(row.Status)) return; // don't add a marker
+
+    L.circleMarker([row.Lat, row.Lon], {
+      "color": colorFor(row),
+      "fill": true,
+      "fillOpacity": 0.8
+    }).bindPopup(formatPopup(row)).addTo(markers);
+  };
 
   const resetMarkers = data => {
     markers.removeFrom(map);
